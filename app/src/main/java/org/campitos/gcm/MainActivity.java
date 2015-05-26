@@ -3,16 +3,20 @@ package org.campitos.gcm;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /*
 API KEY: AIzaSyCMVsw6hAsGYV0rlNgRWpjXat75qXX_4iA
@@ -20,6 +24,12 @@ API KEY: AIzaSyCMVsw6hAsGYV0rlNgRWpjXat75qXX_4iA
 
 
 public class MainActivity extends ActionBarActivity {
+    /*
+    El siguiente es el numero de proyecto se requiere en el registro y se encuentra enla apli console
+    cuando te metes a tu pagina inicial alli viene asi tal cual, como numero de proyecto
+     */
+    String SENDER_id="964281068865";
+
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     static final String TAG = "GCMDemo";
     GoogleCloudMessaging gcm;
@@ -27,6 +37,7 @@ public class MainActivity extends ActionBarActivity {
     private static final String PROPERTY_APP_VERSION = "appVersion";
     String registroId;
     Context ctx;
+    TextView textoRegistro;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,12 +46,16 @@ public class MainActivity extends ActionBarActivity {
         if(servicio){
             //Toast.makeText(this, "Si tienes google play", Toast.LENGTH_LONG).show();
             gcm=GoogleCloudMessaging.getInstance(this);
+            //Inicializamos el conetxto para que lo vean todos
             ctx=getApplicationContext();
 
             registroId=getRegistroId(ctx);
             if(registroId.isEmpty()){
-                Toast.makeText(this,"No te has registrado todavia", Toast.LENGTH_LONG).show();
-                //registrarEnBackground
+              //  Toast.makeText(this,"No te has registrado todavia", Toast.LENGTH_LONG).show();
+                registrarEnBackground();
+            }
+            else{
+                Log.i(TAG, "APK de Google Play Services  no encontrada!!!");
             }
 
         }
@@ -80,9 +95,41 @@ public class MainActivity extends ActionBarActivity {
         }
 
     }
-
+// EL REGISTRO SE GUARDA EN SharedPreferences
     private SharedPreferences getGcmPreferences(Context ctx){
         return getSharedPreferences(MainActivity.class.getSimpleName(),Context.MODE_PRIVATE);
+    }
+    /***********************************************************************
+    EL METODO registrarEnBackground, es el corazón del registro
+     **********************************************************************/
+
+    private  void registrarEnBackground(){
+        textoRegistro= (TextView) findViewById(R.id.textoRegistro);
+        new AsyncTask<String, Integer, String>() {
+            @Override
+            protected String doInBackground(String... strings) {
+                String msg="";
+                try{
+                    if(gcm==null){
+                        gcm= GoogleCloudMessaging.getInstance(ctx);
+                    }
+                    //Este simple método realiza el registro!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    registroId=gcm.register(SENDER_id);
+                    msg="Dispositivo registrado con id="+registroId;
+                    /******************************************************************************************
+                    Una vez obtenido el registro debemos transferirlo a través de http para que se guarde en el servidor
+                     **************************************************************************************************/
+                    String servidorulr="http://campitos-ley.whelastic.net/uv/servicios/celulares/registrar-mensajeria";
+                    Map<String, String> paramos=new HashMap<String, String>();
+
+
+                }catch(Exception e){
+
+                }
+
+                return msg;
+            }
+        }.execute(null,null,null);
     }
 
     @Override
