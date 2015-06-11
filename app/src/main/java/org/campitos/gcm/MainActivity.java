@@ -5,18 +5,27 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 
 /*
 API KEY: AIzaSyCMVsw6hAsGYV0rlNgRWpjXat75qXX_4iA
@@ -59,13 +68,22 @@ public class MainActivity extends ActionBarActivity {
             }
 
         }
+        //PROGRAMACION DE BOTON
+      Button botonMensajes= (Button) findViewById(R.id.botonMensajes);
+        botonMensajes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Vibrator vibrador = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                vibrador.vibrate(3000);
+            }
+        });
     }
     /*******************************************************************
     Método para obtener el id de registro
      ******************************************************************/
     private String getRegistroId(Context ctx){
      final SharedPreferences sharedPreferences =getGcmPreferences(ctx);
-        String registroId= sharedPreferences.getString(PROPERTY_REG_ID,"");
+        String registroId= sharedPreferences.getString(PROPERTY_REG_ID, "");
         if(registroId.isEmpty()){
             Log.i(TAG, "registro no encontardo");
             return "";
@@ -119,17 +137,60 @@ public class MainActivity extends ActionBarActivity {
                     /******************************************************************************************
                     Una vez obtenido el registro debemos transferirlo a través de http para que se guarde en el servidor
                      **************************************************************************************************/
-                    String servidorulr="http://campitos-ley.whelastic.net/uv/servicios/celulares/registrar-mensajeria";
-                    Map<String, String> paramos=new HashMap<String, String>();
+                    String servidorulr="http://192.168.1.72:8080/registro-mensajes";
 
+                    try{
+                        hacerPost(servidorulr,registroId);
+                    }catch(Exception e){
+System.out.println("algo malo ocurrio...."+e.getMessage());
+                    }
+                    // Persist the regID - no need to register again.
+                    storeRegistrationId(ctx, registroId);
 
                 }catch(Exception e){
-
+System.out.println("algo malote ocurrio:"+e.getMessage());
                 }
+
 
                 return msg;
             }
         }.execute(null,null,null);
+    }
+
+    private void storeRegistrationId(Context context, String regId) {
+        final SharedPreferences prefs = getGcmPreferences(context);
+        int appVersion = getAppVersion(context);
+        Log.i(TAG, "Saving regId on app version " + appVersion);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(PROPERTY_REG_ID, regId);
+        editor.putInt(PROPERTY_APP_VERSION, appVersion);
+        editor.commit();
+    }
+   /*************************************************************************
+    * Método para hacer el POST DEL REGISTRO
+
+     *************************************************************************/
+    public String hacerPost(String  url,String registroId){
+
+        RegistroMensajeria registroMensajeria=new RegistroMensajeria();
+        registroMensajeria.setRegistroId(registroId);
+        //Headers
+        HttpHeaders httpHeaders=new HttpHeaders();
+        httpHeaders.setContentType(new MediaType("application","json"));
+        //creamos la entidad a enviar
+        HttpEntity<RegistroMensajeria> mensajeriaHttpEntity=new HttpEntity<RegistroMensajeria>(registroMensajeria,httpHeaders);
+        //Creamoe una instancia de restemplate
+        RestTemplate restTemplate=new RestTemplate();
+        //Agregamos los convertidores json
+        //Agregamos los convertidores de jackson
+        restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+        restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
+
+        //Hacemos el post y obtenemos nuestra respuesta
+        ResponseEntity<String> responseEntity=restTemplate.exchange(url, HttpMethod.POST,mensajeriaHttpEntity,String.class);
+        String respuesta=responseEntity.getBody();
+        return respuesta;
+
     }
 
     @Override

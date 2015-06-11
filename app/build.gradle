@@ -17,11 +17,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    packagingOptions {
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/notice.txt'
+    }
+    lintOptions {
+        //
+        abortOnError false
+    }
 }
 
 dependencies {
     compile 'com.android.support:appcompat-v7:22.1.1'
     compile 'com.google.android.gms:play-services:7.0.0'
+    compile 'org.springframework.android:spring-android-rest-template:2.0.0.M2'
+    compile 'org.springframework.android:spring-android-core:1.0.1.RELEASE'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.5.2'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.6.0-rc1'
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.google.android.gms:play-services:7.0.0'
+    compile "com.google.android.gms:play-services:3.1.+"
 }
