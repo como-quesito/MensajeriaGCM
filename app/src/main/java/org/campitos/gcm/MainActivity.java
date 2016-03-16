@@ -144,7 +144,7 @@ public class MainActivity extends ActionBarActivity {
                     }catch(Exception e){
 System.out.println("algo malo ocurrio...."+e.getMessage());
                     }
-                    // Persist the regID - no need to register again.
+                    // Persist the regID - no need to register again.////
                     storeRegistrationId(ctx, registroId);
 
                 }catch(Exception e){
