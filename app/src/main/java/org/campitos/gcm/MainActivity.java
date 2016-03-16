@@ -137,7 +137,7 @@ public class MainActivity extends ActionBarActivity {
                     /******************************************************************************************
                     Una vez obtenido el registro debemos transferirlo a través de http para que se guarde en el servidor
                      **************************************************************************************************/
-                    String servidorulr="http://192.168.1.72:8080/registro-mensajes";
+                    String servidorulr="http://192.168.1.76:9000/registro-mensajes";
 
                     try{
                         hacerPost(servidorulr,registroId);
